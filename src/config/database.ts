@@ -1,4 +1,5 @@
 import {Pool} from 'pg';
+import { createTables } from '../models/createTables.js';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL as string | undefined
@@ -9,6 +10,9 @@ export const connectDB = async (): Promise<void> => {
         const client = await pool.connect();
         console.log("✅ PostgreSQL connected successfully!");
         client.release();
+
+        //create tables if not exists
+        await createTables();
     } catch (error) {
         console.error('❌ PostgreSQL connection failed:', error);
         throw error;
