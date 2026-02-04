@@ -1,29 +1,21 @@
-import express from "express";
-import dotenv from "dotenv";
-
-//Load env variables from .env file
-dotenv.config();
+import 'dotenv/config';
+import app from './app.js';
 
 // Import database after env is loaded so process.env is available during module init
-const { connectDB } = await import("./config/database.js");
+import { connectDB } from "./config/database.js";
 
-const app = express();
+//Load env variables from .env file
+// dotenv.config();
+
 const PORT = 3000;
-
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK',
-    environment: process.env.NODE_ENV 
-  });
-});
-
 
 connectDB().then(_ => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
     });
 }).catch((error) => {
-    console.error('Failed to connect to database:', error);
+    console.error('Failed to start the server:', error);
     process.exit(1);
 })
