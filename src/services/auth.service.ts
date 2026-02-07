@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
-import { query } from '../config/database.js';
+import { query } from '../config/database';
+import {generateAccessToken, generateRefreshToken} from './token.service';
 
 interface RegisterUserData {
     email: string;
@@ -34,4 +35,47 @@ export const registerUser = async (userData: RegisterUserData) => {
     // console.log("Result of Insert query :: ", result);
 
     return result.rows[0];
+}
+
+interface LoginUserData {
+    email: string,
+    password: string,
+}
+
+export const loginUser = async (userData: LoginUserData) => {
+    const { email, password } = userData;
+
+    const result = await query(
+        'SELECT id, email, name, password_hash FROM users WHERE email = $1',
+        [email]
+    );
+
+    if(result.rows.length == 0) {
+        throw new Error("Invalid Credentials");
+    }
+
+    const user = result.rows[0];
+
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if(!isPasswordValid) {
+        throw new Error("Invalid Password");
+    }
+
+    const accessToken = generateAccessToken({
+        userId: user.id,
+        email: user.email
+    });
+
+    const refreshToken = await generateRefreshToken(user.id);
+
+    return {
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name
+        },
+        accessToken,
+        refreshToken
+    }
 }

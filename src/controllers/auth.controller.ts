@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { registerSchema } from '../utils/validation.js';
-import { registerUser } from '../services/auth.service.js';
+import { registerSchema, loginSchema } from '../utils/validation';
+import { registerUser, loginUser } from '../services/auth.service';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,6 +32,39 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         console.log("Error occured in controller :: ", error);
         if(error.message == "User with this email already exists") {
             return res.status(409).json({message: error.message});
+        }
+        next(error);
+    }
+}
+
+export const login = async (
+    req: Request, res: Response, next: NextFunction
+) => {
+    try {
+        //Validation of request body
+
+        const {error, value} = loginSchema.validate(req.body);
+
+        if(error) {
+            return res.status(400).json({
+                error: 'Validation failed',
+                details: error.details.map(d => d.message)
+            });           
+        }
+
+        const result = await loginUser(value);
+
+        res.status(200).json({
+            message: "Login Succesful",
+            user : result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken
+        })
+
+    } catch (error: any) {
+        if (error.message === 'Invalid credentials' || error.message === "Invalid Password") {
+            console.log(error.message);
+            return res.status(401).json({ error: "Invalid credentials" });
         }
         next(error);
     }

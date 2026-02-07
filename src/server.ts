@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import app from './app.js';
+import app from './app';
 
 // Import database after env is loaded so process.env is available during module init
-import { connectDB } from "./config/database.js";
+import { connectDB } from "./config/database";
 
 //Load env variables from .env file
 // dotenv.config();
