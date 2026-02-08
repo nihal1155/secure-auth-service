@@ -53,7 +53,6 @@ export const generateRefreshToken = async (userId: string): Promise<string> => {
   return token;
 };
 
-
 // Verify access token
 export const verifyAccessToken = (token: string): TokenPayload => {
   try {

@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { query } from '../config/database';
-import {generateAccessToken, generateRefreshToken} from './token.service';
+import {verifyAccessToken, generateAccessToken, generateRefreshToken, verifyRefreshToken} from './token.service';
 
 interface RegisterUserData {
     email: string;
@@ -77,5 +78,40 @@ export const loginUser = async (userData: LoginUserData) => {
         },
         accessToken,
         refreshToken
+    }
+}
+
+export const refreshAccessToken = async (refreshToken : string) => {
+    const userId = await verifyRefreshToken(refreshToken);
+
+    const result = await query(
+        'SELECT id, email, name FROM users WHERE id = $1',
+        [userId]
+    )
+
+
+    if (result.rows.length === 0) {
+        throw new Error('User not found');
+    }
+
+    const user = result.rows[0];
+
+    const newAccessToken = generateAccessToken({
+        userId: user.id,
+        email : user.email
+    });
+
+    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+    await query(
+        'DELETE FROM refresh_tokens WHERE token_hash = $1',
+        [tokenHash]
+    )
+
+    const newRefreshToken = await generateRefreshToken(user.id);
+
+    return {
+        accessToken : newAccessToken,
+        refreshToken: newRefreshToken
     }
 }

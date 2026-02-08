@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { registerSchema, loginSchema } from '../utils/validation';
-import { registerUser, loginUser } from '../services/auth.service';
+import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/validation';
+import { registerUser, loginUser, refreshAccessToken } from '../services/auth.service';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -19,7 +19,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         const user = await registerUser(value);
         
         console.log("User registered successfully in controller ::", user);
-        res.status(201).json({
+        return res.status(201).json({
             message : "User registered successfully !",
             user : {
                 user: user.id,
@@ -33,7 +33,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         if(error.message == "User with this email already exists") {
             return res.status(409).json({message: error.message});
         }
-        next(error);
+        return next(error);
     }
 }
 
@@ -48,7 +48,7 @@ export const login = async (
         if(error) {
             return res.status(400).json({
                 error: 'Validation failed',
-                details: error.details.map(d => d.message)
+                details: error.details.map((d: { message: string }) => d.message)
             });           
         }
 
@@ -66,6 +66,35 @@ export const login = async (
             console.log(error.message);
             return res.status(401).json({ error: "Invalid credentials" });
         }
-        next(error);
+        return next(error);
+    }
+}
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {error, value} = refreshTokenSchema.validate(req.body);
+
+        if(error) {
+            return res.status(400).json({
+                error: 'Validation failed',
+                details: error.details.map(d => d.message)
+            });
+        }
+
+        const tokens = await refreshAccessToken(value.refreshToken);
+
+        return res.status(200).json({
+            message: "Token refresh Successfully",
+            accessToken : tokens.accessToken,
+            refreshToken: tokens.refreshToken
+        });
+
+        
+    } catch (error: any) {
+        if(error.message.includes("Invalid or expired")) {
+            return res.status(401).json({error: error.message});
+        }
+
+        return next(error);
     }
 }
