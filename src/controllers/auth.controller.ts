@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/validation';
-import { registerUser, loginUser, refreshAccessToken } from '../services/auth.service';
+import { registerUser, loginUser, refreshAccessToken} from '../services/auth.service';
+import {verifyRefreshToken} from "../services/token.service";
+import { query } from '../config/database';
+import crypto from 'crypto';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -98,3 +101,81 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
         return next(error);
     }
 }
+
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?.userId;
+
+        if(!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const result = await query(
+            'SELECT id, email, name, provider, created_at FROM users WHERE id = $1',
+            [userId]
+        )
+
+        if(result.rows.length === 0) {
+            return res.status(404).json({
+                error: "User not found"
+            })
+        }
+
+        const user = result.rows[0];
+
+        console.log("User profile accessed");
+        return res.status(200).json({
+            user : {
+                id:user.id,
+                email: user.email,
+                name: user.name,
+                provider : user.provider,
+                createdAt: user.created_at
+            }
+        })
+    } catch (error) {
+        return next(error);
+    }
+}
+
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { error, value } = refreshTokenSchema.validate(req.body);
+    
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: error.details.map(d => d.message)
+      });
+    }
+
+    // Verify refresh token first
+    await verifyRefreshToken(value.refreshToken);
+
+    // Hash and delete refresh token from database
+    const tokenHash = crypto.createHash('sha256').update(value.refreshToken).digest('hex');
+    
+    const result = await query(
+      'DELETE FROM refresh_tokens WHERE token_hash = $1',
+      [tokenHash]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    return res.status(200).json({
+      message: 'Logged out successfully'
+    });
+  } catch (error: any) {
+     // Handle verification errors
+    if (error.message && error.message.includes('Invalid or expired')) {
+      return res.status(401).json({ error: error.message });
+    }
+    return next(error);
+  }
+};
