@@ -65,7 +65,8 @@ export const login = async (
         })
 
     } catch (error: any) {
-        if (error.message === 'Invalid credentials' || error.message === "Invalid Password") {
+        console.log(error.message);
+        if (error.message === "Invalid Credentials") {
             console.log(error.message);
             return res.status(401).json({ error: "Invalid credentials" });
         }

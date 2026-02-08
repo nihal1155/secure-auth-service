@@ -60,7 +60,7 @@ export const loginUser = async (userData: LoginUserData) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if(!isPasswordValid) {
-        throw new Error("Invalid Password");
+        throw new Error("Invalid Credentials");
     }
 
     const accessToken = generateAccessToken({
