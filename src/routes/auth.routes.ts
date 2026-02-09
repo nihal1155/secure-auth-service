@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, refresh, getCurrentUser, logout } from "../controllers/auth.controller";
+import { register, login, refresh, getCurrentUser, logout, googleAuth, googleCallback } from "../controllers/auth.controller";
 import { authenticateToken } from '../middleware/auth.middleware';
 import { loginLimiter, registerLimiter, refreshLimiter } from '../middleware/rateLimiter';
 
@@ -11,6 +11,9 @@ router.post('/login', loginLimiter, login);
 router.post('/refresh', refreshLimiter,refresh);
 router.post('/logout', logout);
 
+// Google OAuth
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
 
 //Protected routes (auth required)
 router.get('/me', authenticateToken, getCurrentUser);
