@@ -203,17 +203,18 @@ export const googleCallback = [
             const refreshToken = await generateRefreshToken(user.id);
 
             // Send tokens (in real app, redirect to frontend with tokens)
-            res.json({
-                message: 'Google login successful',
-                user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                provider: user.provider
-                },
-                accessToken,
-                refreshToken
-            });
+            // res.json({
+            //     message: 'Google login successful',
+            //     user: {
+            //     id: user.id,
+            //     email: user.email,
+            //     name: user.name,
+            //     provider: user.provider
+            //     },
+            //     accessToken,
+            //     refreshToken
+            // });
+            res.redirect(`http://localhost:3001/auth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
         } catch (error) {
             next(error);
         }

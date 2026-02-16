@@ -12,7 +12,7 @@ router.post('/refresh', refreshLimiter,refresh);
 router.post('/logout', logout);
 
 // Google OAuth
-router.get('/google', googleAuth);
+router.get('/google', googleAuth);  
 router.get('/google/callback', googleCallback);
 
 //Protected routes (auth required)
