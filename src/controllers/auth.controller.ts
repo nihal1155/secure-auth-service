@@ -4,6 +4,8 @@ import { registerUser, loginUser, refreshAccessToken} from '../services/auth.ser
 import {verifyRefreshToken} from "../services/token.service";
 import { query } from '../config/database';
 import crypto from 'crypto';
+import passport from 'passport';
+import { generateAccessToken, generateRefreshToken } from '../services/token.service';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -105,7 +107,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
 
 export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user?.userId;
+        const userId = (req.user as any)?.userId;
 
         if(!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -180,3 +182,41 @@ export const logout = async (
     return next(error);
   }
 };
+
+export const googleAuth = passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session : false
+});
+
+export const googleCallback = [
+    passport.authenticate('google', { session: false, failureRedirect : '/login'}),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const user = req.user as any;
+
+            // Generate tokens
+            const accessToken = generateAccessToken({
+                userId: user.id,
+                email: user.email
+            });
+
+            const refreshToken = await generateRefreshToken(user.id);
+
+            // Send tokens (in real app, redirect to frontend with tokens)
+            // res.json({
+            //     message: 'Google login successful',
+            //     user: {
+            //     id: user.id,
+            //     email: user.email,
+            //     name: user.name,
+            //     provider: user.provider
+            //     },
+            //     accessToken,
+            //     refreshToken
+            // });
+            res.redirect(`http://localhost:3001/auth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
+        } catch (error) {
+            next(error);
+        }
+    }
+]
