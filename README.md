@@ -1,6 +1,6 @@
 # SecureAuth - Authentication Microservice
 
-A production-ready authentication microservice built with TypeScript, Express, PostgreSQL, and Redis. Provides JWT-based authentication with OAuth 2.0 support, rate limiting, and token refresh capabilities.
+A production-ready authentication microservice built with TypeScript, Express, PostgreSQL. Provides JWT-based authentication with OAuth 2.0 support, rate limiting, and token refresh capabilities.
 
 🔗 **Live API:** [https://secure-auth-service-production.up.railway.app](https://secure-auth-service-production.up.railway.app)
 
@@ -22,7 +22,6 @@ A production-ready authentication microservice built with TypeScript, Express, P
 - TypeScript
 - Node.js + Express.js
 - PostgreSQL (user data)
-- Redis (rate limiting)
 - Passport.js (OAuth)
 - JWT (jsonwebtoken)
 - Bcrypt (password hashing)
@@ -60,13 +59,12 @@ A production-ready authentication microservice built with TypeScript, Express, P
 │  └─────────────────────┘   │
 └──────────┬──────────────────┘
            │
-    ┌──────┴──────┐
-    ↓             ↓
-┌──────────┐  ┌────────┐
-│PostgreSQL│  │ Redis  │
-│  (Users, │  │ (Rate  │
-│  Tokens) │  │ Limit) │
-└──────────┘  └────────┘
+           ↓
+       ┌──────────┐ 
+       │PostgreSQL│
+       │  (Users, │ 
+       │  Tokens) │ 
+       └──────────┘  
 ```
 
 ## API Endpoints
@@ -182,7 +180,6 @@ Authorization: Bearer <accessToken>
 - Node.js 18+
 - Docker & Docker Compose
 - PostgreSQL (or use Docker)
-- Redis (or use Docker)
 
 ### Local Setup
 
@@ -207,7 +204,6 @@ Edit `.env` with your values:
 NODE_ENV=development
 PORT=3000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/secureauth
-REDIS_URL=redis://localhost:6379
 JWT_ACCESS_SECRET=your-secret-key-change-this
 JWT_REFRESH_SECRET=your-refresh-secret-change-this
 JWT_ACCESS_EXPIRY=15m
@@ -335,7 +331,6 @@ Deployed on Railway with automatic CI/CD from GitHub.
 Set these in Railway dashboard:
 - `NODE_ENV=production`
 - `DATABASE_URL` (Railway PostgreSQL)
-- `REDIS_URL` (Railway Redis)
 - `JWT_ACCESS_SECRET` (strong random string)
 - `JWT_REFRESH_SECRET` (different strong random string)
 - `GOOGLE_CLIENT_ID`
